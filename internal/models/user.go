@@ -10,6 +10,6 @@ type User struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Email        string             `bson:"email" json:"email"`
 	Username     string             `bson:"username" json:"username"`
-	PasswordHash string             `bson:"password_hash" json:"passwordhash"`
+	PasswordHash string             `bson:"password_hash" json:"-"`
 	CreatedAt    time.Time          `bson:"created_at" json:"created_at"`
 }
