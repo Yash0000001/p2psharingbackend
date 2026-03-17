@@ -24,6 +24,7 @@ require (
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.14 // indirect
 	github.com/googleapis/gax-go/v2 v2.17.0 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect

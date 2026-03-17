@@ -21,7 +21,6 @@ func Mailer(subject string, username string, toEmail string, textBody string, ht
 		textBody,
 		htmlBody,
 	)
-
 	client := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 
 	response, err := client.Send(email)
@@ -30,7 +29,7 @@ func Mailer(subject string, username string, toEmail string, textBody string, ht
 		return err
 	}
 
-	log.Println("Email sent:", response.StatusCode)
+	log.Println("Email sent:", response.StatusCode, response.Body, response.Headers)
 
 	return nil
 }
