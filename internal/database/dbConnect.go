@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -29,5 +30,27 @@ func DBConnect() {
 
 	log.Println("Database Connected Successfully nigga!!")
 
-	DB = client.Database("p2p sharing")
+	DB = client.Database("p2psharing")
+}
+
+func CreateUserIndexes() {
+
+	collection := DB.Collection("users")
+
+	indexes := []mongo.IndexModel{
+		{
+			Keys:    bson.M{"email": 1},
+			Options: options.Index().SetUnique(true),
+		},
+		{
+			Keys:    bson.M{"username": 1},
+			Options: options.Index().SetUnique(true),
+		},
+	}
+
+	_, err := collection.Indexes().CreateMany(context.Background(), indexes)
+
+	if err != nil {
+		log.Println("Index creation error:", err)
+	}
 }

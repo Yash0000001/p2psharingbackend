@@ -10,8 +10,11 @@ import (
 
 func main() {
 	database.DBConnect()
-
+	database.CreateUserIndexes()
 	log.Println("Server started on port 8080")
+
+
+	// routes 
 	routes.AuthRoutes()
 
 	http.ListenAndServe(":8080", nil)
