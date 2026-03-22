@@ -20,6 +20,7 @@ func main() {
 
 	// routes
 	routes.AuthRoutes()
+	routes.RoomRoutes()
 
 	http.ListenAndServe(":8080", nil)
 }

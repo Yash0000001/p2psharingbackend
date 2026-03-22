@@ -6,21 +6,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type Location struct {
+	Type        string    `bson:"type"`
+	Coordinates []float64 `bson:"coordinates"`
+}
 type Room struct {
 	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	RoomID     string             `bson:"room_id" json:"roomId"`
+	RoomID     string             `bson:"room_id" json:"roomId"` 
 	HostID     primitive.ObjectID `bson:"host_id" json:"hostId"`
 	DeviceName string             `bson:"device_name" json:"deviceName"`
-
-	Latitude  float64 `bson:"latitude" json:"latitude"`
-	Longitude float64 `bson:"longitude" json:"longitude"`
-
+	Location Location `bson:"location" json:"location"`
 	Participants []primitive.ObjectID `bson:"participants" json:"participants"`
-
 	IsActive bool `bson:"is_active" json:"isActive"`
-
 	CreatedAt  time.Time `bson:"created_at" json:"createdAt"`
 	LastActive time.Time `bson:"last_active" json:"lastActive"`
-
 	ExpiresAt time.Time `bson:"expires_at" json:"expiresAt"`
 }
