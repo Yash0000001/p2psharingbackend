@@ -7,6 +7,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/yash0000001/p2psharingbackend/internal/database"
 	"github.com/yash0000001/p2psharingbackend/internal/routes"
+	"github.com/yash0000001/p2psharingbackend/internal/utils"
 )
 
 func main() {
@@ -23,5 +24,5 @@ func main() {
 	routes.RoomRoutes()
 	routes.SignallingRoutes()
 
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", utils.EnableCORS(http.DefaultServeMux))
 }
