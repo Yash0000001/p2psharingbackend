@@ -20,6 +20,11 @@ func AuthRoutes() {
 	)
 
 	http.Handle(
+		"/auth/logout",
+		middleware.RateLimit(http.HandlerFunc(utils.GETOnly(controller.Logout))),
+	)
+
+	http.Handle(
 		"/auth/google",
 		middleware.RateLimit(http.HandlerFunc(utils.POSTOnly(controller.GoogleSignin))),
 	)
@@ -31,5 +36,9 @@ func AuthRoutes() {
 	http.Handle(
 		"/auth/forgot-password",
 		middleware.RateLimit(http.HandlerFunc(utils.POSTOnly(controller.ForgotPassword))),
+	)
+	http.Handle(
+		"/auth/me",
+		middleware.AuthMiddleware(utils.GETOnly(http.HandlerFunc(controller.Me))),
 	)
 }

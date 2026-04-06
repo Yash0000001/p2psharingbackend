@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/yash0000001/p2psharingbackend/internal/database"
@@ -17,12 +18,12 @@ func main() {
 	}
 	database.DBConnect()
 	database.CreateUserIndexes()
-	log.Println("Server started on port 8080")
+	log.Println("Server started on port", os.Getenv("PORT"))
 
 	// routes
 	routes.AuthRoutes()
 	routes.RoomRoutes()
 	routes.SignallingRoutes()
 
-	http.ListenAndServe(":8080", utils.EnableCORS(http.DefaultServeMux))
+	http.ListenAndServe(":"+os.Getenv("PORT"), utils.EnableCORS(http.DefaultServeMux))
 }

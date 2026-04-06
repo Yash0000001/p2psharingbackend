@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"os"
 	"time"
 
@@ -17,4 +18,31 @@ func GenerateToken(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return token.SignedString(JWTSecret)
+}
+
+func VerifyToken(tokenString string) (string, error) {
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("invalid signing method")
+		}
+
+		return JWTSecret, nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return "", errors.New("invalid token")
+	}
+
+	userID, ok := claims["userID"].(string)
+	if !ok {
+		return "", errors.New("userID not found in token")
+	}
+	return userID, nil
 }

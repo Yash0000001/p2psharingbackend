@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,7 +14,7 @@ import (
 var DB *mongo.Database
 
 func DBConnect() {
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	clientOptions := options.Client().ApplyURI(os.Getenv("MONGODB_URI"))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

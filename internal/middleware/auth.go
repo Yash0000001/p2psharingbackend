@@ -40,3 +40,24 @@ func JWTAuth(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+func AuthMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+        cookie, err := r.Cookie("access_token")
+        if err != nil {
+            http.Error(w, "Unauthorized - No cookie", http.StatusUnauthorized)
+            return
+        }
+
+        userID, err := utils.VerifyToken(cookie.Value)
+        if err != nil {
+            http.Error(w, "Unauthorized - Invalid token", http.StatusUnauthorized)
+            return
+        }
+
+        // 🔥 Put userID into context
+        ctx := context.WithValue(r.Context(), "userID", userID)
+
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
+}

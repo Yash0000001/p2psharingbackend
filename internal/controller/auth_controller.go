@@ -40,6 +40,26 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	}
 	collection := database.DB.Collection("users")
 
+	var existingUser models.User
+	err := (collection.FindOne(
+		context.Background(),
+		bson.M{"email": body.Email},
+	).Decode(&existingUser))
+
+	if err == nil {
+		utils.SendError(w, 409, "User already exists with this email", existingUser)
+		return
+	}
+	err = (collection.FindOne(
+		context.Background(),
+		bson.M{"username": body.Username},
+	).Decode(&existingUser))
+
+	if err == nil {
+		utils.SendError(w, 409, "This username has already been taken", existingUser)
+		return
+	}
+
 	res, err := collection.InsertOne(context.Background(), user)
 
 	if err != nil {
@@ -58,7 +78,13 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   3600 * 24,
 	})
 
-	utils.SendSuccess(w, http.StatusOK, "User Signup successfull", nil)
+	utils.SendSuccess(w, http.StatusOK, "User Signup successfull", map[string]interface{}{
+		"user": map[string]interface{}{
+			"id":       user.ID.Hex(),
+			"email":    user.Email,
+			"username": user.Username,
+		},
+	})
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +134,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   3600 * 24,
 	})
 
-	utils.SendSuccess(w, http.StatusOK, "User login successfull", nil)
+	utils.SendSuccess(w, http.StatusOK, "User login successfull", map[string]interface{}{
+		"user": map[string]interface{}{
+			"id":       user.ID.Hex(),
+			"email":    user.Email,
+			"username": user.Username,
+		},
+	})
 }
 
 func GoogleSignin(w http.ResponseWriter, r *http.Request) {
@@ -261,4 +293,36 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	})
 
 	utils.SendSuccess(w, http.StatusOK, "User logged out successfully", nil)
+}
+func Me(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+
+    userID, ok := r.Context().Value("userID").(string)
+    if !ok {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+
+    collection := database.DB.Collection("users")
+
+    objID, err := primitive.ObjectIDFromHex(userID)
+    if err != nil {
+        http.Error(w, "Invalid user ID", 400)
+        return
+    }
+
+    var user models.User
+    err = collection.FindOne(context.Background(), bson.M{"_id": objID}).Decode(&user)
+    if err != nil {
+        http.Error(w, "User not found", 404)
+        return
+    }
+
+    utils.SendSuccess(w, 200, "User fetched", map[string]interface{}{
+        "user": map[string]interface{}{
+            "id": user.ID.Hex(),
+            "email": user.Email,
+            "username": user.Username,
+        },
+    })
 }
