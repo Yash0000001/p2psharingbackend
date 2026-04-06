@@ -76,6 +76,8 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Path:     "/",
 		MaxAge:   3600 * 24,
+		Secure:   true, 
+    	SameSite: http.SameSiteNoneMode,
 	})
 
 	utils.SendSuccess(w, http.StatusOK, "User Signup successfull", map[string]interface{}{
@@ -129,9 +131,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "access_token",
 		Value:    token,
 		HttpOnly: true,
-		Secure:   false,
 		Path:     "/",
 		MaxAge:   3600 * 24,
+		Secure:   true, 
+    	SameSite: http.SameSiteNoneMode,
 	})
 
 	utils.SendSuccess(w, http.StatusOK, "User login successfull", map[string]interface{}{
