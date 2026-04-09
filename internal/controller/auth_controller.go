@@ -297,6 +297,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 	utils.SendSuccess(w, http.StatusOK, "User logged out successfully", nil)
 }
+
 func Me(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
 
