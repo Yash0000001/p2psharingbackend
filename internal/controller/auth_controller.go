@@ -293,6 +293,8 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
+		Secure:   true,                  //please remember this
+        SameSite: http.SameSiteNoneMode, //please remember this
 	})
 
 	utils.SendSuccess(w, http.StatusOK, "User logged out successfully", nil)
