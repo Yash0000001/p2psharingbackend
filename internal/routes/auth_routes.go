@@ -38,6 +38,10 @@ func AuthRoutes() {
 		middleware.RateLimit(http.HandlerFunc(utils.POSTOnly(controller.ForgotPassword))),
 	)
 	http.Handle(
+		"/auth/verify-email",
+		middleware.RateLimit(http.HandlerFunc(utils.POSTOnly(controller.VerifyEmail))),
+	)
+	http.Handle(
 		"/auth/me",
 		middleware.AuthMiddleware(utils.GETOnly(http.HandlerFunc(controller.Me))),
 	)

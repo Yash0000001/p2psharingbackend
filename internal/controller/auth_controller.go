@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -68,25 +69,67 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := res.InsertedID.(primitive.ObjectID)
-	token, _ := utils.GenerateToken(id.Hex())
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    token,
-		HttpOnly: true,
-		Path:     "/",
-		MaxAge:   3600 * 24,
-		Secure:   true, 
-    	SameSite: http.SameSiteNoneMode,
-	})
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:3000"
+	}
+	frontendURL = strings.TrimRight(frontendURL, "/")
+	verificationToken, _ := utils.GenerateVerificationToken(id.Hex())
+	verificationLink := frontendURL + "/verify-email/token/" + verificationToken
 
-	utils.SendSuccess(w, http.StatusOK, "User Signup successfull", map[string]interface{}{
+	textBody := "Welcome to Blcak! Verify your email here: " + verificationLink
+	htmlBody := utils.WelcomeEmailTemplate(user.Username, verificationLink)
+
+	if err := utils.Mailer("Welcome to Blcak - Verify your email", user.Username, user.Email, textBody, htmlBody); err != nil {
+		utils.SendError(w, http.StatusInternalServerError, "Failed to send verification email", err)
+		return
+	}
+
+	utils.SendSuccess(w, http.StatusOK, "Signup successful. Check your email to verify your account.", map[string]interface{}{
 		"user": map[string]interface{}{
 			"id":       user.ID.Hex(),
 			"email":    user.Email,
 			"username": user.Username,
 		},
 	})
+}
+
+func VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var body struct {
+		Token string `json:"token"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		utils.SendError(w, http.StatusBadRequest, "Invalid request body", err)
+		return
+	}
+
+	userID, err := utils.VerifyVerificationToken(body.Token)
+	if err != nil {
+		utils.SendError(w, http.StatusBadRequest, "Invalid verification token", err)
+		return
+	}
+
+	objID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		utils.SendError(w, http.StatusBadRequest, "Invalid user ID", err)
+		return
+	}
+
+	collection := database.DB.Collection("users")
+	_, err = collection.UpdateOne(
+		context.Background(),
+		bson.M{"_id": objID},
+		bson.M{"$set": bson.M{"isVerified": true}},
+	)
+	if err != nil {
+		utils.SendError(w, http.StatusInternalServerError, "Failed to verify email", err)
+		return
+	}
+
+	utils.SendSuccess(w, http.StatusOK, "Email verified successfully", nil)
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -124,6 +167,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		utils.SendError(w, http.StatusUnauthorized, "Invalid Password", err)
 		return
 	}
+	if !user.IsVerified || user.IsVerified == false {
+		utils.SendError(w, http.StatusUnauthorized, "Please Verify Your Email", err)
+		return
+	}
 
 	token, _ := utils.GenerateToken(user.ID.Hex())
 
@@ -133,8 +180,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Path:     "/",
 		MaxAge:   3600 * 24,
-		Secure:   true, 
-    	SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	utils.SendSuccess(w, http.StatusOK, "User login successfull", map[string]interface{}{
@@ -293,42 +340,42 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   true,                  //please remember this
-        SameSite: http.SameSiteNoneMode, //please remember this
+		Secure:   true,                  
+		SameSite: http.SameSiteNoneMode, 
 	})
 
 	utils.SendSuccess(w, http.StatusOK, "User logged out successfully", nil)
 }
 
 func Me(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 
-    userID, ok := r.Context().Value("userID").(string)
-    if !ok {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+	userID, ok := r.Context().Value("userID").(string)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-    collection := database.DB.Collection("users")
+	collection := database.DB.Collection("users")
 
-    objID, err := primitive.ObjectIDFromHex(userID)
-    if err != nil {
-        http.Error(w, "Invalid user ID", 400)
-        return
-    }
+	objID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		http.Error(w, "Invalid user ID", 400)
+		return
+	}
 
-    var user models.User
-    err = collection.FindOne(context.Background(), bson.M{"_id": objID}).Decode(&user)
-    if err != nil {
-        http.Error(w, "User not found", 404)
-        return
-    }
+	var user models.User
+	err = collection.FindOne(context.Background(), bson.M{"_id": objID}).Decode(&user)
+	if err != nil {
+		http.Error(w, "User not found", 404)
+		return
+	}
 
-    utils.SendSuccess(w, 200, "User fetched", map[string]interface{}{
-        "user": map[string]interface{}{
-            "id": user.ID.Hex(),
-            "email": user.Email,
-            "username": user.Username,
-        },
-    })
+	utils.SendSuccess(w, 200, "User fetched", map[string]interface{}{
+		"user": map[string]interface{}{
+			"id":       user.ID.Hex(),
+			"email":    user.Email,
+			"username": user.Username,
+		},
+	})
 }
