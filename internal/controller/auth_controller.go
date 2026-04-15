@@ -70,7 +70,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 
 	id := res.InsertedID.(primitive.ObjectID)
 
-	frontendURL := os.Getenv("FRONTEND_URL")
+	frontendURL := os.Getenv("FRONTEND_PORT")
 	if frontendURL == "" {
 		frontendURL = "http://localhost:3000"
 	}
